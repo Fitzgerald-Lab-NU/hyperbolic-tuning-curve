@@ -56,32 +56,19 @@ Our results suggest that animals encode spatial information as a latent hyperbol
 
 ### Dependencies
 
+We recommend using Python 3.12.
+
 From the **`ok1/`** directory:
 
 ```bash
-uv venv
+uv venv --python 3.12
 source .venv/bin/activate  
 uv sync
 uv pip install -e .
 ```
-
-
-### Code structure
-
-The codebase is organized as follows:
-
-- [scripts/](scripts/): contains scripts for running the experiments:
-  - [scripts/capacity_simulation.py](scripts/capacity_simulation.py): capacity simulation scripts
-  - [scripts/inclass_simulation.py](scripts/inclass_simulation.py): capacity simulation within similar patterns scripts
-- [src/experiments/cli](src/experiments/cli): main experiment interface
-- [src/experiments/recall](src/experiments/recall): implementation of the Karcher-flow model and other baselines
-- [src/experiments/config](src/experiments/config): contains configs of the recall simulation
-- [notebooks/Statistically_hyperbolic.ipynb](notebooks/Statistically_hyperbolic.ipynb): simulations for statistically hyperbolic semi-metric spaces.
-
-
+___
 ### Quick start
 
-<br>
 
 #### Statistically hyperbolic semi-metric space
 
@@ -93,63 +80,136 @@ The results show that both the exponential distribution and the log-normal distr
 <div align="center">
   <img src="imgs/stat-hyp.png" alt="overview" height="340"/>
 
-  <br/>
-
 </div>
 
+___
 
 
-#### Capacity simulation
-
-Using cuda is highly recommended for simulations
-
-```bash
-python capacity_simulation.py --M-min 20 --M-max 200 --M-step 20 --n-trials 10 --max-steps 5
-
-python capacity_simulation.py --dataset mnist --no-pca --device cuda \
-  --M-min 10 --M-max 400 --n-trials 5 --max-steps 5 --mem-R 3
-```
-
-Image runs write under `outputs/<dataset>/<pixels|pca{d}>/Radius<R>/beta<β>/` (e.g. `beta10`, `beta1`).
-
-
-####  In-class simulation
-
-Outputs: `outputs/<dataset>/inclass/class<id>/<pixels|pca{d}>/Radius<R>/beta<β>/`.
+#### Pattern Completion
 
 ```bash
-python3 inclass_simulation.py --dataset cifar10 --class-id 3 --pca-dim 50 \
-  --M-min 10 --M-max 400 --mem-R 2 --n-trials 5 --device cpu
+python main.py --M-min 10 --M-max 100 --pca-dim 10 --dataset mnist --mem-R 3 --beta 1 --noise_sigma 0.3
 
-python3 inclass_simulation.py --dataset mnist --class-id 0 --no-pca \
-  --M-min 10 --M-max 200 --mem-R 3 --n-trials 5 --device cuda
-
-python3 inclass_simulation.py --dataset cifar10 --class-id 0 --no-pca \
-  --M-min 10 --M-max 200 --mem-R 3 --n-trials 5 --device cuda
+python main.py --M-min 10 --M-max 100 --pca-dim 10 --dataset cifar10 --mem-R 3 --beta 1 --noise_sigma 0.3
 ```
 
-To run all simulations, see `run_exp.sh`
+We provide an example of running pattern completion on your own dataset
+```python
+import os
+os.environ["GEOMSTATS_BACKEND"] = "numpy"
 
+import numpy as np
+import torchvision
+import torchvision.transforms as transforms
+from tqdm import tqdm
+
+from memory import *
+
+M = 100
+rng = np.random.default_rng()
+
+# Load images
+transform = transforms.Compose([transforms.ToTensor()])
+data = torchvision.datasets.FashionMNIST(
+    root="./data", train=True, download=True, transform=transform
+)
+indices = rng.choice(len(data), size=M, replace=False)
+images = []
+for idx in indices:
+    img, _ = data[int(idx)]
+    images.append(img.numpy().flatten())
+
+# PCA preprocessing
+X = np.array(images, dtype=np.float64)
+X_red = image_pca_and_rescale(X, 10, 2)
+
+# Project points to the hyperboloid
+H = HyperboloidKappa(dim=10, curvature=-1)
+points = to_hyperboloid(H, X_red)
+
+# Add perturbation
+query_on_manifold = add_noise(H, 0.3, points, rng)
+query_euclidean = add_noise_euclidean(0.3, X_red, rng)
+
+# Recall
+steps = 64
+cor_kfm = kfm(H, points, query_on_manifold, steps, beta=1)
+cor_mhn = mhn(X_red, query_euclidean, steps, beta=1)
+cor_dam = dam(X_red, query_euclidean, steps, beta=1)
+tqdm.write(
+    f"M={M} kfm: {cor_kfm}/{M} mhn: {cor_mhn}/{M} dam: {cor_dam}/{M}"
+)
+```
+
+___
+
+#### Machine Learning Tasks
+
+Benchmarks Karcher-flow (`kf_*`), Hopfield (`hf_*`), and Einstein (`ein_*`) attention via [`main_ml.py`](main_ml.py). Implementation lives under [`ml/hyphop/`](ml/hyphop/).
+
+**MNIST classification**
+
+```bash
+python main_ml.py --task mnist --model kf_attention --hidden-dim 8 # single run
+python main_ml.py --task mnist --model ein_attention --hidden-dim 32 --epochs 14 --device cuda # single run for the einstein midpoint baseline
+python main_ml.py --task mnist --benchmark # reproduce tables in the paper
+```
+
+Output: `ml/hyphop/results/mnist/mnist_benchmark_results.csv`
+
+___
+
+**Multiple instance learning**
+
+Data download
+
+```bash
+mkdir -p ml/hyphop/datasets/mil_datasets
+cd ml/hyphop/datasets/mil_datasets
+
+wget http://www.cs.columbia.edu/~andrews/mil/data/MIL-Data-2002-Musk-Corel-Trec9-MATLAB.tgz
+tar zxvf MIL-Data-2002-Musk-Corel-Trec9-MATLAB.tgz
+find . -name '*.mat' -exec mv -n -t . {} +
+```
+
+Datasets: `tiger`, `fox`, `elephant`. Pooling models (`*_pooling`) are the default benchmark setting.
+
+Single run:
+
+```bash
+python main_ml.py --task mil --dataset fox --model kf_pooling # single run
+python main_ml.py --task mil --dataset elephant --model ein_pooling --epochs 100 # single run
+python main_ml.py --task mil --benchmark # reproduce tables in the apper
+```
+
+Output: `ml/hyphop/results/mil/mil_benchmark_results.csv`
+
+Run a script with `--help` for the full list, e.g. `python ml/hyphop/test_mnist.py --help`.
+
+___
 
 ### Cite
 
 If you find this work useful, please consider citing our paper:
 ```bibtex
-@inproceedings{
-anonymous2026hyperbolic,
-title={Hyperbolic neural population geometry benefits computation},
-author={Anonymous},
-booktitle={Forty-third International Conference on Machine Learning},
-year={2026},
-url={https://openreview.net/forum?id=WXNjDNDnpy}
-}
+  @inproceedings{
+  anonymous2026hyperbolic,
+  title={Hyperbolic neural population geometry benefits computation},
+  author={Anonymous},
+  booktitle={Forty-third International Conference on Machine Learning},
+  year={2026},
+  url={https://openreview.net/forum?id=WXNjDNDnpy}
+  }
 ```
 
 
 
 salloc --account=p32593 --job-name=ok --nodes=1 --partition=gengpu --gres=gpu:a100:1 --ntasks-per-node=1 --cpus-per-task=16 --mem=80G --time=01:00:00
 
-srun --jobid=8118904 --pty bash -l
+
+salloc --account=p32593 --job-name=ok --nodes=1 --partition=short --ntasks-per-node=1 --cpus-per-task=8 --mem=32G --time=01:00:00
+
+srun --jobid=8559222 --pty bash -l
 
 
 
@@ -158,3 +218,7 @@ python3 capacity_simulation.py --dataset cifar10 --device cuda --no-pca \
   --wandb --wandb-group "A" \
   --wandb-tags "sim:capacity,dataset:cifar10,feat:pixels,R:2,device:cuda"
 
+python test_pca.py --M-min 10 --M-max 100 --pca-dim 10 --dataset mnist --mem-R 3 --beta 1 --noise_sigma 0.3
+
+
+python3 test_pca.py --pca-dim 10 --n-runs 2 --dataset mnist --mem-R 3 --beta 1.0 --noise_sigma 0.3

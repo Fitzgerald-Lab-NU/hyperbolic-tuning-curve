@@ -1,0 +1,24 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+.venv/
+
+# Local data / experiment outputs
+data/
+outputs/
+
+# W&B local run logs
+wandb/
+
+# Slurm logs
+*.out
+*.err
+
+# Archives (local backups; do not commit)
+archive/
+ml/archive/
+
+# Nested git clones
+**/.git/

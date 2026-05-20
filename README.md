@@ -67,10 +67,9 @@ uv sync
 uv pip install -e .
 ```
 ___
-### Quick start
 
 
-#### Statistically hyperbolic semi-metric space
+### Statistically hyperbolic semi-metric space
 
 
 We provide a short tutorial on verifying whether a semi-metric space is statistically hyperbolic.
@@ -85,7 +84,7 @@ The results show that both the exponential distribution and the log-normal distr
 ___
 
 
-#### Pattern Completion
+### Pattern Completion
 
 ```bash
 python main.py --M-min 10 --M-max 100 --pca-dim 10 --dataset mnist --mem-R 3 --beta 1 --noise_sigma 0.3
@@ -143,7 +142,7 @@ tqdm.write(
 
 ___
 
-#### Machine Learning Tasks
+### Machine Learning Tasks
 
 Benchmarks Karcher-flow (`kf_*`), Hopfield (`hf_*`), and Einstein (`ein_*`) attention via [`main_ml.py`](main_ml.py). Implementation lives under [`ml/hyphop/`](ml/hyphop/).
 

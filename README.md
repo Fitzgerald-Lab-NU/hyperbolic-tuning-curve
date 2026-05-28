@@ -58,7 +58,7 @@ Our results suggest that animals encode spatial information as a latent hyperbol
 
 We recommend using Python 3.12.
 
-From the **`ok1/`** directory:
+From the **`hyperbolic-tuning-curve/`** directory:
 
 ```bash
 uv venv --python 3.12

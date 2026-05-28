@@ -200,24 +200,3 @@ If you find this work useful, please consider citing our paper:
   url={https://openreview.net/forum?id=WXNjDNDnpy}
   }
 ```
-
-
-
-salloc --account=p32593 --job-name=ok --nodes=1 --partition=gengpu --gres=gpu:a100:1 --ntasks-per-node=1 --cpus-per-task=16 --mem=80G --time=01:00:00
-
-
-salloc --account=p32593 --job-name=ok --nodes=1 --partition=short --ntasks-per-node=1 --cpus-per-task=8 --mem=32G --time=01:00:00
-
-srun --jobid=8559222 --pty bash -l
-
-
-
-python3 capacity_simulation.py --dataset cifar10 --device cuda --no-pca \
-  --M-min 100 --M-max 200 --n-trials 5 --max-steps 5 --mem-R 2 \
-  --wandb --wandb-group "A" \
-  --wandb-tags "sim:capacity,dataset:cifar10,feat:pixels,R:2,device:cuda"
-
-python test_pca.py --M-min 10 --M-max 100 --pca-dim 10 --dataset mnist --mem-R 3 --beta 1 --noise_sigma 0.3
-
-
-python3 test_pca.py --pca-dim 10 --n-runs 2 --dataset mnist --mem-R 3 --beta 1.0 --noise_sigma 0.3

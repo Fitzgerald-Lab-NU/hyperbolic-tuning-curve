@@ -191,12 +191,11 @@ ___
 
 If you find this work useful, please consider citing our paper:
 ```bibtex
-  @inproceedings{
-  anonymous2026hyperbolic,
-  title={Hyperbolic neural population geometry benefits computation},
-  author={Anonymous},
-  booktitle={Forty-third International Conference on Machine Learning},
-  year={2026},
-  url={https://openreview.net/forum?id=WXNjDNDnpy}
-  }
-```
+@inproceedings{
+wu2026hyperbolic,
+title={Hyperbolic neural population geometry benefits computation},
+author={Dennis Wu and Yi-Chun Hung and Braden Yuille and James E Fitzgerald and Han Liu},
+booktitle={Forty-third International Conference on Machine Learning},
+year={2026},
+url={https://openreview.net/forum?id=WXNjDNDnpy}
+}```

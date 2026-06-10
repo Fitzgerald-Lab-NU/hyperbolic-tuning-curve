@@ -14,7 +14,7 @@
   <b>Hyperbolic neural population geometry benefits computation</b><br/>
   Dennis Wu, Yi-Chun Hung, Braden Yuille, James E. Fitzgerald*, Han Liu*<br/>
   The International Conference on Machine Learning (ICML) 2026 <br/>
-  <small><a href="https://arxiv.org/abs/2606.10238"><em>[Read the paper]</em></a></small> 
+  <!-- <small><a href="https://arxiv.org/abs/2606.10238"><em>[Read the paper]</em></a></small>  -->
   <a href="https://arxiv.org/abs/2606.10238">
     <img src="https://img.shields.io/badge/arXiv-2506.23024-b31b1b.svg" alt="arXiv"/> 
   </a>
